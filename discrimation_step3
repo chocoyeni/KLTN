@@ -1,0 +1,31 @@
+import delimited "kt1_merged_sample_clean.csv", clear
+
+keep user_id part question_id is_correct_valid_int
+
+* tổng điểm mỗi user theo part
+bysort user_id part: egen total_score = total(is_correct_valid_int)
+
+* chia nhóm theo part
+egen group = xtile(total_score), by(part) nq(100)
+
+* upper/lower
+gen upper = group >= 74
+gen lower = group <= 27
+
+* tạo biến phụ
+gen correct_upper = is_correct_valid_int if upper == 1
+gen correct_lower = is_correct_valid_int if lower == 1
+
+* ===== collapse chuẩn (fix lỗi if trong collapse) =====
+collapse ///
+(mean) p_upper = correct_upper ///
+(mean) p_lower = correct_lower, ///
+by(part question_id)
+
+* D-index
+gen d = p_upper - p_lower
+
+* câu kém
+gen bad_item = (d < 0.2)
+
+export delimited using "step3_discrimination.csv", replace
