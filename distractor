@@ -1,0 +1,39 @@
+* load lại data gốc
+import delimited "kt1_merged_sample_clean.csv", clear
+
+* chỉ giữ answer hợp lệ
+keep if !missing(user_answer_abcd)
+
+* chuẩn hóa chữ hoa
+replace user_answer_abcd = upper(user_answer_abcd)
+replace correct_answer = upper(correct_answer)
+
+* ===== TẠO KEY (ĐÁP ÁN ĐÚNG) =====
+preserve
+keep part question_id correct_answer
+bysort part question_id: keep if _n == 1
+save "answer_key.dta", replace
+restore
+
+* ===== ĐẾM OPTION =====
+contract part question_id user_answer_abcd
+
+* tổng số chọn mỗi câu
+bysort part question_id: egen total = total(_freq)
+
+* tỉ lệ
+gen pct = _freq / total
+
+* ===== MERGE KEY =====
+merge m:1 part question_id using "answer_key.dta"
+drop _merge
+
+* xác định đáp án đúng
+gen is_key = (user_answer_abcd == correct_answer)
+
+* distractor chết
+gen dead = (pct < 0.05 & is_key == 0)
+
+sort part question_id pct
+
+export delimited using "step2_distractor.csv", replace
