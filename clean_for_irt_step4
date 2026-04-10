@@ -1,0 +1,19 @@
+* load CTT
+import delimited "step1_ctt.csv", clear
+
+* merge với discrimination
+import delimited "step3_discrimination.csv", clear
+save "step3.dta", replace
+
+import delimited "step1_ctt.csv", clear
+merge 1:1 part question_id using "step3.dta"
+drop _merge
+
+* ===== lọc =====
+keep if difficulty > 0.1 & difficulty < 0.9
+keep if d >= 0.2
+
+* (optional) đủ dữ liệu
+keep if attempt_count >= 100
+
+export delimited using "clean_items_for_irt.csv", replace
