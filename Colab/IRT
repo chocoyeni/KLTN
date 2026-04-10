@@ -1,0 +1,21 @@
+import pandas as pd
+from pyirt import irt
+
+df = pd.read_csv("irt_input.csv")
+
+df = df.drop_duplicates(subset=["user_id", "question_id"])
+
+data = list(zip(
+    df["user_id"].astype(str),
+    df["question_id"].astype(str),
+    df["is_correct_valid_int"].astype(int)
+))
+
+item_param, user_param = irt(data)
+
+item_df = pd.DataFrame([
+    (k, v["alpha"], v["beta"]) for k, v in item_param.items()
+], columns=["question_id", "a", "b"])
+
+print(item_df.head())
+item_df.to_csv("irt_result.csv", index=False)
