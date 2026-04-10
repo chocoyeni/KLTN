@@ -1,0 +1,21 @@
+clear all
+set more off
+
+* load data
+import delimited "kt1_merged_sample_clean.csv", clear
+
+* đảm bảo đúng kiểu
+replace is_correct_valid_int = real(is_correct_valid_int)
+
+* ===== CTT =====
+preserve
+
+collapse ///
+(mean) difficulty = is_correct_valid_int ///
+(mean) avg_time = elapsed_time_sec_valid ///
+(count) attempt_count = is_correct_valid_int, ///
+by(part question_id)
+
+export delimited using "step1_ctt.csv", replace
+
+restore
