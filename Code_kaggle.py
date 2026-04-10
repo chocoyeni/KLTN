@@ -1,16 +1,3 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-
-# Input data files are available in the read-only "../input/" directory
-# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
-
-import os
-for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames:
-        print(os.path.join(dirname, filename))
-
-
-// part 2 
 
 import pandas as pd
 import numpy as np
@@ -75,30 +62,10 @@ for col in ["user_id", "question_id", "bundle_id", "tags"]:
 
 # xuất
 out_path = "kt1_merged_sample_clean.csv"
-df.to_csv(out_path, index=false)
+df.to_csv(out_path, index=False)
 
 print(" DONE. Exported:", out_path)
 print("Rows:", len(df))
 print("Blank rate:", df["is_blank"].mean())
 print("Time valid rate:", df["time_valid"].mean())
 print("Answer valid rate:", df["answer_valid"].mean())
-
-//part 3
-
-import pandas as pd
-import os
-
-df = pd.read_csv("/kaggle/input/data-kltn/kt1_merged_sample.csv")
-
-out_dir = "data_by_part"
-os.makedirs(out_dir, exist_ok=True)
-
-# Tách thành 7 file
-for p in sorted(df["part"].dropna().unique()):
-    df_p = df[df["part"] == p]
-    
-    print(f"Part {p}: {len(df_p)} rows")
-    
-    df_p.to_csv(f"{out_dir}/data_part{p}.csv", index=False)
-
-print(" Đã tách xong 7 part")
