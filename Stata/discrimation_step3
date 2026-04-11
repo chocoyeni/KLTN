@@ -1,12 +1,15 @@
 clear all
 set more off
 
-import delimited "kt1_merged_sample_clean.csv", clear
+import delimited "C:\Users\yennh\Downloads\kt1_merged_sample_clean.csv", clear
 
 * ===== CLEAN =====
 drop if missing(user_id, question_id, is_correct_valid_int)
 
-replace is_correct_valid_int = real(is_correct_valid_int)
+capture confirm string variable is_correct_valid_int
+if !_rc {
+    replace is_correct_valid_int = real(is_correct_valid_int)
+}
 
 * remove duplicate
 bysort user_id question_id (elapsed_time_sec_valid): keep if _n == 1
@@ -23,14 +26,9 @@ gen correct_upper = is_correct_valid_int if upper == 1
 gen correct_lower = is_correct_valid_int if lower == 1
 
 * ===== DISCRIMINATION =====
-collapse ///
-(mean) p_upper = correct_upper ///
-(mean) p_lower = correct_lower ///
-(count) attempt_count = is_correct_valid_int, ///
-by(part question_id)
+collapse (mean) p_upper=correct_upper (mean) p_lower=correct_lower (count) attempt_count=is_correct_valid_int, by(part question_id)
 
 gen d = p_upper - p_lower
-
 gen bad_item = (d < 0.2)
 
 export delimited using "step3_discrimination.csv", replace
