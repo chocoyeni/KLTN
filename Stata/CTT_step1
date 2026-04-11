@@ -1,51 +1,175 @@
-clear all
-set more off
+. import delimited "C:\Users\yennh\Downloads\kt1_merged_sample_clean.csv"
+(encoding automatically selected: ISO-8859-1)
+(21 vars, 4,070,221 obs)
 
-import delimited "kt1_merged_sample_clean.csv", clear
+. * ===== CLEAN DATA =====
 
-* ===== CLEAN DATA =====
-drop if missing(user_id, question_id, is_correct_valid_int)
+. 
+. drop if missing(user_id, question_id, is_correct_valid_int)
+(7,533 observations deleted)
 
-replace is_correct_valid_int = real(is_correct_valid_int)
+. 
+. 
+. 
+. replace is_correct_valid_int = real(is_correct_valid_int)
+type mismatch
+r(109);
 
-* remove duplicate
-bysort user_id question_id (elapsed_time_sec_valid): keep if _n == 1
+. 
+. 
+. 
+. * remove duplicate
 
-* remove spam time
-drop if elapsed_time_sec_valid < 3
-drop if elapsed_time_sec_valid > 3600
+. 
+. bysort user_id question_id (elapsed_time_sec_valid): keep if _n == 1
+(829,519 observations deleted)
 
-* ===== USER FILTER =====
-preserve
-collapse ///
-(mean) avg_time_user = elapsed_time_sec_valid ///
-(mean) accuracy = is_correct_valid_int ///
-(count) total_attempt = is_correct_valid_int, ///
-by(user_id)
+. 
+. 
+. 
+. * remove spam time
 
-gen spam_user = avg_time_user < 5
-gen abnormal_user = (accuracy < 0.1 | accuracy > 0.95)
+. 
+. drop if elapsed_time_sec_valid < 3
+(58,886 observations deleted)
 
-keep if spam_user == 0 & abnormal_user == 0
+. 
+. drop if elapsed_time_sec_valid > 3600
+(19,356 observations deleted)
 
-keep user_id
-tempfile good_users
-save `good_users'
-restore
+. 
+. 
+. 
+. * ===== USER FILTER =====
 
-merge m:1 user_id using `good_users'
-keep if _merge == 3
-drop _merge
+. 
+. preserve
 
-* ===== CTT =====
-collapse ///
-(mean) difficulty = is_correct_valid_int ///
-(mean) avg_time = elapsed_time_sec_valid ///
-(count) attempt_count = is_correct_valid_int, ///
-by(part question_id)
+. 
+. collapse ///
+/ invalid name
+r(198);
 
-* ===== VISUAL =====
-histogram difficulty, percent title("Difficulty Distribution")
-graph export "difficulty_hist.png", replace
+. 
+. (mean) avg_time_user = elapsed_time_sec_valid ///
+( is not a valid command name
+r(199);
 
-export delimited using "step1_ctt.csv", replace
+. 
+. (mean) accuracy = is_correct_valid_int ///
+( is not a valid command name
+r(199);
+
+. 
+. (count) total_attempt = is_correct_valid_int, ///
+( is not a valid command name
+r(199);
+
+. 
+. by(user_id)
+: required
+r(100);
+
+. 
+. 
+. 
+. gen spam_user = avg_time_user < 5
+avg_time_user not found
+r(111);
+
+. 
+. gen abnormal_user = (accuracy < 0.1 | accuracy > 0.95)
+accuracy not found
+r(111);
+
+. 
+. 
+. 
+. keep if spam_user == 0 & abnormal_user == 0
+spam_user not found
+r(111);
+
+. 
+. 
+. 
+. keep user_id
+
+. 
+. tempfile good_users
+
+. 
+. save `good_users'
+file C:\Users\yennh\AppData\Local\Temp\ST_55bc_000004.tmp saved as .dta format
+
+. 
+. restore
+
+. 
+. 
+. 
+. merge m:1 user_id using `good_users'
+variable user_id does not uniquely identify observations in the using data
+r(459);
+
+. 
+. keep if _merge == 3
+_merge not found
+r(111);
+
+. 
+. drop _merge
+variable _merge not found
+r(111);
+
+. 
+. 
+. 
+. * ===== CTT =====
+
+. 
+. collapse ///
+/ invalid name
+r(198);
+
+. 
+. (mean) difficulty = is_correct_valid_int ///
+( is not a valid command name
+r(199);
+
+. 
+. (mean) avg_time = elapsed_time_sec_valid ///
+( is not a valid command name
+r(199);
+
+. 
+. (count) attempt_count = is_correct_valid_int, ///
+( is not a valid command name
+r(199);
+
+. 
+. by(part question_id)
+: required
+r(100);
+
+. 
+. 
+. 
+. * ===== VISUAL =====
+
+. 
+. histogram difficulty, percent title("Difficulty Distribution")
+variable difficulty not found
+r(111);
+
+. 
+. graph export "difficulty_hist.png", replace
+could not find Graph window
+r(693);
+
+. 
+. 
+. 
+. export delimited using "step1_ctt.csv", replace
+file step1_ctt.csv saved
+
+. 
