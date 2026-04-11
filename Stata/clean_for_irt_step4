@@ -1,19 +1,41 @@
-* load CTT
-import delimited "step1_ctt.csv", clear
+clear all
+set more off
 
-* merge với discrimination
+* ===== LOAD DATA =====
+import delimited "step1_ctt.csv", clear
+save "ctt.dta", replace
+
 import delimited "step3_discrimination.csv", clear
-save "step3.dta", replace
+save "disc.dta", replace
 
-import delimited "step1_ctt.csv", clear
-merge 1:1 part question_id using "step3.dta"
+* ===== MERGE =====
+use "ctt.dta", clear
+merge 1:1 part question_id using "disc.dta"
 drop _merge
 
-* ===== lọc =====
+* ===== FILTER =====
+
+* difficulty hợp lý
 keep if difficulty > 0.1 & difficulty < 0.9
+
+* discrimination đủ tốt
 keep if d >= 0.2
 
-* (optional) đủ dữ liệu
+* đủ data
 keep if attempt_count >= 100
+
+* thời gian hợp lý
+keep if avg_time >= 5 & avg_time <= 300
+
+* ===== CONSISTENCY CHECK =====
+gen inconsistent = (difficulty > 0.8 & d < 0.2) | (difficulty < 0.2 & d < 0.2)
+drop if inconsistent == 1
+
+* ===== VISUAL =====
+histogram d, percent title("Discrimination Distribution")
+graph export "discrimination_hist.png", replace
+
+scatter d difficulty, title("Difficulty vs Discrimination")
+graph export "scatter_diff_disc.png", replace
 
 export delimited using "clean_items_for_irt.csv", replace
