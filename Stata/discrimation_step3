@@ -17,11 +17,18 @@ bysort user_id question_id (elapsed_time_sec_valid): keep if _n == 1
 * ===== TOTAL SCORE =====
 bysort user_id part: egen total_score = total(is_correct_valid_int)
 
-egen group = xtile(total_score), by(part) nq(100)
+* ===== RANK METHOD (NO XTILE) =====
+sort part total_score
 
-gen upper = group >= 74
-gen lower = group <= 27
+by part: gen rank = _n
+by part: gen N = _N
 
+gen pct = rank / N * 100
+
+gen upper = pct >= 73
+gen lower = pct <= 27
+
+* ===== BIẾN PHỤ =====
 gen correct_upper = is_correct_valid_int if upper == 1
 gen correct_lower = is_correct_valid_int if lower == 1
 
