@@ -1,17 +1,51 @@
 clear all
 set more off
 
-* load data
 import delimited "kt1_merged_sample_clean.csv", clear
 
-* đảm bảo đúng kiểu
+* ===== CLEAN DATA =====
+drop if missing(user_id, question_id, is_correct_valid_int)
+
 replace is_correct_valid_int = real(is_correct_valid_int)
 
-* ===== CTT =====
-preserve
+* remove duplicate
+bysort user_id question_id (elapsed_time_sec_valid): keep if _n == 1
 
-collapse (mean) difficulty = is_correct_valid_int (mean) avg_time = elapsed_time_sec_valid (count) attempt_count = is_correct_valid_int, by(part question_id)
+* remove spam time
+drop if elapsed_time_sec_valid < 3
+drop if elapsed_time_sec_valid > 3600
+
+* ===== USER FILTER =====
+preserve
+collapse ///
+(mean) avg_time_user = elapsed_time_sec_valid ///
+(mean) accuracy = is_correct_valid_int ///
+(count) total_attempt = is_correct_valid_int, ///
+by(user_id)
+
+gen spam_user = avg_time_user < 5
+gen abnormal_user = (accuracy < 0.1 | accuracy > 0.95)
+
+keep if spam_user == 0 & abnormal_user == 0
+
+keep user_id
+tempfile good_users
+save `good_users'
+restore
+
+merge m:1 user_id using `good_users'
+keep if _merge == 3
+drop _merge
+
+* ===== CTT =====
+collapse ///
+(mean) difficulty = is_correct_valid_int ///
+(mean) avg_time = elapsed_time_sec_valid ///
+(count) attempt_count = is_correct_valid_int, ///
+by(part question_id)
+
+* ===== VISUAL =====
+histogram difficulty, percent title("Difficulty Distribution")
+graph export "difficulty_hist.png", replace
 
 export delimited using "step1_ctt.csv", replace
-
-restore
