@@ -1,7 +1,7 @@
 clear all
 set more off
 
-* ===== LOAD DATA =====
+* ===== LOAD =====
 import delimited "step1_ctt.csv", clear
 save "ctt.dta", replace
 
@@ -10,24 +10,21 @@ save "disc.dta", replace
 
 * ===== MERGE =====
 use "ctt.dta", clear
+duplicates drop part question_id, force
+
 merge 1:1 part question_id using "disc.dta"
+keep if _merge == 3
 drop _merge
 
 * ===== FILTER =====
-
-* difficulty hợp lý
 keep if difficulty > 0.1 & difficulty < 0.9
-
-* discrimination đủ tốt
 keep if d >= 0.2
-
-* đủ data
 keep if attempt_count >= 100
 
-* thời gian hợp lý
+* dùng avg_time
 keep if avg_time >= 5 & avg_time <= 300
 
-* ===== CONSISTENCY CHECK =====
+* consistency check
 gen inconsistent = (difficulty > 0.8 & d < 0.2) | (difficulty < 0.2 & d < 0.2)
 drop if inconsistent == 1
 
