@@ -1,7 +1,7 @@
 clear all
 set more off
 
-import delimited "kt1_merged_sample_clean.csv", clear
+import delimited "C:\Users\yennh\Downloads\kt1_merged_sample_clean.csv", clear
 
 * ===== CLEAN =====
 drop if missing(user_answer_abcd, correct_answer)
@@ -13,6 +13,7 @@ replace correct_answer = upper(correct_answer)
 preserve
 keep part question_id correct_answer
 bysort part question_id: keep if _n == 1
+duplicates drop part question_id, force
 save "answer_key.dta", replace
 restore
 
@@ -25,6 +26,7 @@ gen pct = _freq / total
 
 * ===== MERGE KEY =====
 merge m:1 part question_id using "answer_key.dta"
+keep if _merge == 3
 drop _merge
 
 gen is_key = (user_answer_abcd == correct_answer)
@@ -32,7 +34,5 @@ gen is_key = (user_answer_abcd == correct_answer)
 * ===== DISTRACTOR =====
 gen dead = (pct < 0.05 & is_key == 0)
 gen good_distractor = (pct >= 0.05 & pct <= 0.5 & is_key == 0)
-
-sort part question_id pct
 
 export delimited using "step2_distractor.csv", replace
