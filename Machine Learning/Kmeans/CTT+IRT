@@ -2,40 +2,36 @@ import pandas as pd
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-# ====== 1. LOAD DATA ======
 ctt = pd.read_csv("step1_ctt.csv")
 disc = pd.read_csv("step3_discrimination.csv")
 irt = pd.read_csv("irt_result.csv")
 
-# ====== 2. MERGE DATA ======
 df = ctt.merge(disc, on=["question_id", "part"], how="inner")
 df = df.merge(irt, on="question_id", how="inner")
 
-# ====== 3. FIX COLUMN ======
 if "attempt_count_x" in df.columns:
     df = df.rename(columns={"attempt_count_x": "attempt_count"})
 
 if "attempt_count" not in df.columns:
     df["attempt_count"] = 0
 
-# ====== 4. FEATURE ======
+// feature
 features = df[[
     "difficulty",
     "d",
     "a",
     "b",
-      
 ]].fillna(0)
 
-# ====== 5. KMEANS ======
+// kmeans
 kmeans = KMeans(n_clusters=3, random_state=0, n_init=10)
 df["cluster"] = kmeans.fit_predict(features)
 
-# ====== 6. GÁN NHÃN TỪ ML ======
+// gán nhãn từ ml
 cluster_mean = df.groupby("cluster")["difficulty"].mean()
-print("\nCluster mean difficulty:\n", cluster_mean)
+print("\ncluster mean difficulty:\n", cluster_mean)
 
-# sắp xếp cluster theo độ khó
+// theo độ khó
 sorted_cluster = cluster_mean.sort_values().index.tolist()
 
 mapping = {
@@ -46,7 +42,7 @@ mapping = {
 
 df["level"] = df["cluster"].map(mapping)
 
-# ====== 7. GENERATE EXAM (ML BASED) ======
+// tạo đề (dựa trên ml)
 easy = df[df["level"] == "easy"]
 medium = df[df["level"] == "medium"]
 hard = df[df["level"] == "hard"]
@@ -57,39 +53,39 @@ exam = pd.concat([
     hard.sample(min(2, len(hard)), random_state=1)
 ])
 
-print("\n=== GENERATED EXAM (ML) ===")
+print("\n=== generated exam (ml) ===")
 print(exam[["question_id", "level", "cluster", "difficulty", "d", "a", "b"]])
 
-# lưu đề
+// lưu đề
 exam.to_csv("generated_exam_ml.csv", index=False)
-print("\nSaved file: generated_exam_ml.csv")
+print("\nsaved file: generated_exam_ml.csv")
 
-# ====== 8. VISUALIZATION ======
+// trực quan hóa
 
-# difficulty vs discrimination
+// difficulty vs discrimination
 plt.figure()
 plt.scatter(df["difficulty"], df["d"])
-plt.xlabel("Difficulty")
-plt.ylabel("Discrimination")
-plt.title("Difficulty vs Discrimination")
+plt.xlabel("difficulty")
+plt.ylabel("discrimination")
+plt.title("difficulty vs discrimination")
 plt.savefig("plot_diff_vs_disc.png")
 
-# cluster visualization
+// cluster
 plt.figure()
 plt.scatter(df["difficulty"], df["a"], c=df["cluster"])
-plt.xlabel("Difficulty")
-plt.ylabel("IRT a")
-plt.title("KMeans Clustering")
+plt.xlabel("difficulty")
+plt.ylabel("irt a")
+plt.title("kmeans clustering")
 plt.savefig("plot_cluster.png")
 
-# difficulty distribution
+// phân bố độ khó
 plt.figure()
 plt.hist(df["difficulty"], bins=10)
-plt.xlabel("Difficulty")
-plt.ylabel("Number of Questions")
-plt.title("Difficulty Distribution")
+plt.xlabel("difficulty")
+plt.ylabel("number of questions")
+plt.title("difficulty distribution")
 plt.savefig("plot_difficulty_hist.png")
 
-# ====== 9. SAVE RESULT ======
+// lưu kết quả
 df.to_csv("ml_output.csv", index=False)
-print("\nSaved file: ml_output.csv")
+print("\nsaved file: ml_output.csv")
