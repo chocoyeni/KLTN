@@ -1,0 +1,21 @@
+* ===== STEP 1: danh sách câu tốt =====
+import delimited "clean_items_for_irt.csv", clear
+keep question_id
+duplicates drop question_id, force
+
+tempfile good_q
+save `good_q'
+
+* ===== STEP 2: load data gốc 
+import delimited "C:\Users\yennh\Downloads\kt1_merged_sample_clean.csv", clear
+
+keep user_id question_id is_correct_valid_int
+drop if missing(user_id, question_id, is_correct_valid_int)
+
+* ===== STEP 3: lọc theo câu tốt =====
+merge m:1 question_id using `good_q'
+keep if _merge == 3
+drop _merge
+
+* ===== STEP 4: export =====
+export delimited using "C:\Users\yennh\Downloads\irt_input.csv", replace

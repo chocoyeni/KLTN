@@ -1,0 +1,65 @@
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+# load data
+ctt = pd.read_csv("step1_ctt.csv")
+disc = pd.read_csv("step3_discrimination.csv")
+
+# merge
+df = ctt.merge(disc, on=["question_id", "part"], how="inner")
+
+# tham số
+features = df[[
+    "difficulty",   # độ khó
+    "d"             # discrimination
+]].fillna(0)
+
+# kmeans
+kmeans = KMeans(n_clusters=3, random_state=0, n_init=10)
+df["cluster"] = kmeans.fit_predict(features)
+
+# cluster
+cluster_mean = df.groupby("cluster")[["difficulty", "d"]].mean()
+print("\nCluster mean (CTT):\n", cluster_mean)
+
+# map theo 3 loại
+# sắp theo difficulty
+sorted_cluster = cluster_mean["difficulty"].sort_values().index.tolist()
+
+mapping = {
+    sorted_cluster[0]: "easy",
+    sorted_cluster[1]: "medium",
+    sorted_cluster[2]: "hard"
+}
+
+df["level"] = df["cluster"].map(mapping)
+
+# sinh đề
+easy = df[df["level"] == "easy"]
+medium = df[df["level"] == "medium"]
+hard = df[df["level"] == "hard"]
+
+exam = pd.concat([
+    easy.sample(min(3, len(easy)), random_state=1),
+    medium.sample(min(5, len(medium)), random_state=1),
+    hard.sample(min(2, len(hard)), random_state=1)
+])
+
+print("\n=== Sinh đề (CTT + KMeans) ===")
+print(exam[["question_id", "level", "difficulty", "d"]])
+
+# Đồ thị
+plt.figure()
+plt.scatter(df["difficulty"], df["d"], c=df["cluster"])
+plt.xlabel("Difficulty")
+plt.ylabel("Discrimination")
+plt.title("KMeans with CTT")
+plt.savefig("plot_kmeans_ctt.png")
+
+# lưu
+df.to_csv("kmeans_ctt_output.csv", index=False)
+exam.to_csv("generated_exam_ctt.csv", index=False)
+
+print("\nSaved file: kmeans_ctt_output.csv")
+print("Saved file: generated_exam_ctt.csv")

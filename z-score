@@ -1,0 +1,83 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import norm
+
+# đọc dữ liệu
+df = pd.read_csv('sample_joint_final.csv')
+
+# sắp xếp theo user, câu hỏi và thời gian làm
+# sau đó giữ lại lần làm đầu tiên cho mỗi (user, question)
+df = df.sort_values(by=['user_id', 'question_id', 'timestamp'])
+df_unique = df.drop_duplicates(subset=['user_id', 'question_id'], keep='first').copy()
+
+# bỏ các bản ghi có thời gian không hợp lệ
+df_unique = df_unique[df_unique['elapsed_time_sec'] > 0]
+
+# lấy log để giảm skew của response time
+df_unique['log_RT'] = np.log(df_unique['elapsed_time_sec'])
+
+# tính mean và std theo từng câu hỏi
+stats = df_unique.groupby('question_id')['log_RT'].agg(['mean', 'std']).reset_index()
+stats.columns = ['question_id', 'm_log', 's_log']
+
+# merge lại vào bảng chính
+df_final = pd.merge(df_unique, stats, on='question_id', how='left')
+
+# tính log z-score
+df_final['log_z_score'] = (df_final['log_RT'] - df_final['m_log']) / df_final['s_log']
+
+# lọc các giá trị quá lệch (outliers)
+lower_bound, upper_bound = -2.5, 2.5
+clean_data = df_final[
+    (df_final['log_z_score'] >= lower_bound) &
+    (df_final['log_z_score'] <= upper_bound)
+].copy()
+
+# loại các câu hỏi có ít dữ liệu hoặc gần như không có biến thiên
+item_counts = clean_data.groupby('question_id').size().reset_index(name='sample_size')
+item_info = pd.merge(item_counts, stats, on='question_id')
+
+bad_items = item_info[
+    (item_info['sample_size'] < 10) |
+    (item_info['s_log'] < 0.1)
+]['question_id'].tolist()
+
+final_data_irt = clean_data[
+    ~clean_data['question_id'].isin(bad_items)
+].copy()
+
+# in báo cáo nhanh
+print("--- báo cáo lọc dữ liệu ---")
+print(f"ban đầu:                 {len(df)}")
+print(f"sau khi bỏ trùng:       {len(df_unique)}")
+print(f"sau khi lọc outlier:    {len(clean_data)}")
+print(f"sau khi bỏ item yếu:    {len(final_data_irt)}")
+print(f"số item bị loại:        {len(bad_items)}")
+
+# vẽ phân phối log z-score
+plt.figure(figsize=(10, 6))
+sns.histplot(final_data_irt['log_z_score'], kde=True, stat="density",
+             color='skyblue', label='dữ liệu thực tế')
+
+# đường chuẩn N(0,1) để so sánh
+x = np.linspace(-4, 4, 100)
+plt.plot(x, norm.pdf(x, 0, 1), 'r--', lw=2,
+         label='phân phối chuẩn (0,1)')
+
+# vẽ ngưỡng lọc
+plt.axvline(x=lower_bound, color='red', linestyle=':',
+            label=f'ngưỡng {lower_bound}')
+plt.axvline(x=upper_bound, color='red', linestyle=':',
+            label=f'ngưỡng {upper_bound}')
+
+plt.title('phân phối log z-score của response time')
+plt.xlabel('log z-score')
+plt.ylabel('density')
+plt.legend()
+plt.grid(axis='y', alpha=0.3)
+plt.show()
+
+# lưu lại nếu cần
+# final_data_irt.to_csv('final_data_ready_for_irt.csv', index=False)
