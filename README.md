@@ -24,6 +24,7 @@ sudo mv moodle /var/www/html/
 Phân quyền thư mục:
 
 sudo chown -R www-data:www-data /var/www/html/moodle
+
 sudo chmod -R 755 /var/www/html/moodle
 
 Khởi động Apache và MySQL:
