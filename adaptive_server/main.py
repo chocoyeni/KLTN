@@ -158,7 +158,7 @@ def generate_quiz(req: QuizRequest):
 #     print("\nDang train lnirt...\n")
 
 #     subprocess.run(
-#         ["Rscript", "test.R"],
+#         ["Rscript", "train.R"],
 #         check=True
 #     )
 
