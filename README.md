@@ -30,6 +30,7 @@ sudo chmod -R 755 /var/www/html/moodle
 Khởi động Apache và MySQL:
 
 sudo systemctl start apache2
+
 sudo systemctl start mysql
 
 Truy cập:
