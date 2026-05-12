@@ -110,7 +110,7 @@ install.packages("readr")
 
 Chạy file huấn luyện:
 
-source("lnirt_model.R")
+source("train.R")
 
 Sau khi huấn luyện hoàn tất, hệ thống sinh ra file:
 
