@@ -125,9 +125,9 @@ Truy cập giao diện Moodle Plugin.
 Người dùng nhập:
 
 * số lượng câu Easy
-* 
+  
 * số lượng câu Medium
-* 
+  
 * số lượng câu Hard
 
 Hệ thống sẽ gửi request tới FastAPI Server và trả kết quả sinh đề.
