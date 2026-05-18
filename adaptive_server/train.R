@@ -19,12 +19,7 @@ df$log_RT <- scale(
   df$log_RT
 )[,1]
 
-# lấy mẫu 50000 dòng
 
-df <- df[sample(
-  nrow(df),
-  min(50000, nrow(df))
-), ]
 
 # đánh lại index
 
