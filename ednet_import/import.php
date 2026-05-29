@@ -36,7 +36,7 @@ echo "Header skipped<br><br>";
  */
 $DB->delete_records('local_ednet_interactions');
 
-echo "🗑 Old data deleted<br><br>";
+echo " Old data deleted<br><br>";
 
 $count = 0;
 
