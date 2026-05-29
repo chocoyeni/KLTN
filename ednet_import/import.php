@@ -3,119 +3,133 @@
 require('../../config.php');
 require_login();
 
-global $PAGE, $OUTPUT;
+global $DB;
 
-$PAGE->set_url('/local/ednet_import/index.php');
-$PAGE->set_context(context_system::instance());
-$PAGE->set_title('Adaptive Quiz Generator');
+set_time_limit(0);
+ini_set('memory_limit', '512M');
 
-$PAGE->requires->css(
-    new moodle_url('/local/ednet_import/style.css')
-);
+$file = __DIR__ . '/data/kt1_merged_sample_part2.csv';
 
-echo $OUTPUT->header();
-
-?>
-
-<div class="adaptive-container">
-
-    <div class="adaptive-card">
-
-        <h1>Adaptive Quiz Generator</h1>
-
-        <p class="subtitle">
-            Generate quizzes using LNIRT
-            and machine learning clustering.
-        </p>
-
-        <form
-            method="post"
-            action="generate.php"
-            onsubmit="showLoading()"
-        >
-
-            <div class="input-group">
-
-                <label>Easy Questions</label>
-
-                <input
-                    type="number"
-                    name="easy"
-                    value="5"
-                    min="0"
-                >
-
-            </div>
-
-            <div class="input-group">
-
-                <label>Medium Questions</label>
-
-                <input
-                    type="number"
-                    name="medium"
-                    value="5"
-                    min="0"
-                >
-
-            </div>
-
-            <div class="input-group">
-
-                <label>Hard Questions</label>
-
-                <input
-                    type="number"
-                    name="hard"
-                    value="5"
-                    min="0"
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="generate-btn"
-            >
-                Generate Adaptive Quiz
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-<div id="loading-box" style="display:none;">
-
-    <div class="loading-card">
-
-        <h2>
-            Training Adaptive Model...
-        </h2>
-
-        <p>
-            Please wait while the system
-            retrains LNIRT and generates
-            a personalized quiz.
-        </p>
-
-    </div>
-
-</div>
-
-<script>
-
-function showLoading() {
-
-    document.getElementById(
-        "loading-box"
-    ).style.display = "flex";
-
+if (!file_exists($file)) {
+    die(" File not found");
 }
 
-</script>
+echo " File found<br>";
 
-<?php
+$handle = fopen($file, "r");
 
-echo $OUTPUT->footer();
+if (!$handle) {
+    die("Cannot open file");
+}
+
+echo " File opened<br>";
+
+/*
+ * SKIP HEADER
+ */
+fgets($handle);
+
+echo "Header skipped<br><br>";
+
+/*
+ * DELETE OLD DATA
+ */
+$DB->delete_records('local_ednet_interactions');
+
+echo "🗑 Old data deleted<br><br>";
+
+$count = 0;
+
+while (($line = fgets($handle)) !== false) {
+
+    $data = str_getcsv($line, ',', '"');
+
+    /*
+     * CHECK COLUMN COUNT
+     */
+    if (count($data) < 12) {
+        continue;
+    }
+
+    /*
+     * DEBUG SAMPLE
+     */
+    if ($count == 0) {
+        echo " Sample row:<br><pre>";
+        print_r($data);
+        echo "</pre><br>";
+    }
+
+    $record = new stdClass();
+
+    /*
+     * RAW DATA
+     */
+
+    // timestamp
+    $record->timestamp = trim($data[0]);
+
+    // q356
+    $record->question_id = trim($data[2]);
+
+    // user answer
+    $record->user_answer = trim($data[3]);
+
+    // elapsed time ms
+    $record->elapsed_time = (int)$data[4];
+
+    // u1
+    $record->user_id = trim($data[5]);
+
+    // correct answer
+    $record->correct_answer = trim($data[7]);
+
+    /*
+     * INSERT
+     */
+    $DB->insert_record(
+        'local_ednet_interactions',
+        $record
+    );
+
+    $count++;
+
+    /*
+     * PROGRESS
+     */
+    if ($count % 5000 == 0) {
+
+        echo "Inserted: $count<br>";
+
+        ob_flush();
+        flush();
+    }
+}
+
+fclose($handle);
+
+echo "<br> DONE: Imported $count records<br>";
+
+/*
+ * TEST
+ */
+echo "<h3> Test data:</h3>";
+
+$test = $DB->get_records(
+    'local_ednet_interactions',
+    null,
+    '',
+    '*',
+    0,
+    5
+);
+
+foreach ($test as $t) {
+
+    echo
+        "$t->user_id | " .
+        "$t->question_id | " .
+        "$t->user_answer | " .
+        "$t->correct_answer | " .
+        "$t->elapsed_time<br>";
+}
