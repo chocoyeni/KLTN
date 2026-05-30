@@ -1,0 +1,90 @@
+
+
+model {
+
+  #person hierarchy
+  Tau_person[1:2,1:2] ~ dwish(R_person[,],3)
+
+  Sigma_person[1:2,1:2] <- inverse(Tau_person[,])
+
+  mu_person[1] <- 0
+  mu_person[2] <- 0
+
+  for(i in 1:U){
+
+    person_par[i,1:2] ~ dmnorm(mu_person[],Tau_person[,])
+
+    theta[i] <- person_par[i,1]
+    zeta[i] <- person_par[i,2]
+  }
+
+  #item hierarchy
+  Tau_item[1:4,1:4] ~ dwish(R_item[,],5)
+
+  Sigma_item[1:4,1:4] <- inverse(Tau_item[,])
+
+  for(k in 1:4){
+    mu_item[k] ~ dnorm(0,0.1)
+  }
+
+  for(j in 1:I){
+
+    item_par[j,1:4] ~ dmnorm(mu_item[],Tau_item[,])
+
+    #item parameters
+    log_alpha[j] <- item_par[j,1]
+    beta[j] <- item_par[j,2]
+    log_phi[j] <- item_par[j,3]
+    lambda[j] <- item_par[j,4]
+
+    alpha[j] <- exp(log_alpha[j])
+    phi[j] <- exp(log_phi[j])
+
+    sigma_rt[j] ~ dunif(0,5)
+
+    tau_rt[j] <- pow(sigma_rt[j],-2)
+  }
+
+  #joint LNIRT model
+  for(n in 1:N){
+
+    #probit IRT
+    eta[n] <- alpha[item[n]] * (theta[user[n]] - beta[item[n]])
+
+    p[n] <- phi(eta[n])
+
+    Y[n] ~ dbern(p[n])
+
+    #response time
+    mu_rt[n] <- lambda[item[n]] - phi[item[n]] * zeta[user[n]]
+
+    RT[n] ~ dnorm(mu_rt[n],tau_rt[item[n]])
+  }
+}
+
+# theta: năng lực người học
+
+# zeta: tốc độ làm bài
+
+# beta: độ khó câu hỏi
+
+# alpha: độ phân biệt câu hỏi
+
+# lambda: mức thời gian trung bình của câu hỏi
+
+# phi: mức ảnh hưởng của tốc độ lên response time
+
+# Sigma_person: covariance của theta và zeta
+
+# Sigma_item: covariance giữa các tham số item
+
+# sigma_rt: độ lệch chuẩn response time
+
+# tau_rt: precision của response time
+
+# eta: latent score của probit IRT
+
+# p: xác suất trả lời đúng
+
+# mu_rt: response time kỳ vọng
+
