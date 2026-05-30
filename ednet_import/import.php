@@ -24,16 +24,12 @@ if (!$handle) {
 
 echo " File opened<br>";
 
-/*
- * SKIP HEADER
- */
+/*SKIP HEADER*/
 fgets($handle);
 
 echo "Header skipped<br><br>";
 
-/*
- * DELETE OLD DATA
- */
+/* DELETE OLD DATA */
 $DB->delete_records('local_ednet_interactions');
 
 echo " Old data deleted<br><br>";
@@ -44,16 +40,12 @@ while (($line = fgets($handle)) !== false) {
 
     $data = str_getcsv($line, ',', '"');
 
-    /*
-     * CHECK COLUMN COUNT
-     */
+    /* CHECK COLUMN COUNT */
     if (count($data) < 12) {
         continue;
     }
 
-    /*
-     * DEBUG SAMPLE
-     */
+    /* DEBUG SAMPLE */
     if ($count == 0) {
         echo " Sample row:<br><pre>";
         print_r($data);
@@ -62,9 +54,7 @@ while (($line = fgets($handle)) !== false) {
 
     $record = new stdClass();
 
-    /*
-     * RAW DATA
-     */
+    /* RAW DATA */
 
     // timestamp
     $record->timestamp = trim($data[0]);
@@ -84,9 +74,7 @@ while (($line = fgets($handle)) !== false) {
     // correct answer
     $record->correct_answer = trim($data[7]);
 
-    /*
-     * INSERT
-     */
+    /* INSERT */
     $DB->insert_record(
         'local_ednet_interactions',
         $record
@@ -94,9 +82,7 @@ while (($line = fgets($handle)) !== false) {
 
     $count++;
 
-    /*
-     * PROGRESS
-     */
+    /* PROGRESS */
     if ($count % 5000 == 0) {
 
         echo "Inserted: $count<br>";
@@ -110,9 +96,7 @@ fclose($handle);
 
 echo "<br> DONE: Imported $count records<br>";
 
-/*
- * TEST
- */
+/* TEST */
 echo "<h3> Test data:</h3>";
 
 $test = $DB->get_records(
